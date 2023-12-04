@@ -32,8 +32,7 @@ public class SearchablePDFCreator {
         document.save(new File(outputPath));
         document.close();
     }
-
-    private static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
+    public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex,PDFont pdFont) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(imageBytes);
         BufferedImage bi = ImageIO.read(in);
         // Create a new PDF page
@@ -45,7 +44,7 @@ public class SearchablePDFCreator {
         PDImageXObject image
                 = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(pageIndex));
         contentStream.drawImage(image, 0, 0);
-        PDFont font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+        PDFont font = pdFont;
         contentStream.setFont(font, 16);
         contentStream.setRenderingMode(RenderingMode.NEITHER);
 
@@ -60,6 +59,10 @@ public class SearchablePDFCreator {
         }
         contentStream.close();
     }
+    public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
+      addPage(imageBytes,result,document,pageIndex,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
+    }
+
     private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
         int fontSize = 17;
         float textWidth = font.getStringWidth(text) / 1000 * fontSize;
