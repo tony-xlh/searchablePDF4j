@@ -21,12 +21,13 @@ public class Main {
         //ArrayList<byte[]> images = new ArrayList<>();
         //images.add(byteArray);
         //SearchablePDFCreator.create(images,"F://output.pdf");
-        String base64 = Base64.getEncoder().encodeToString(byteArray);
-        OCRSpace.key = "your key";
-        OCRResult result = OCRSpace.detect(base64);
-        PDDocument document = new PDDocument();
-        SearchablePDFCreator.addPage(byteArray,result,document,0);
-        document.save(new File("F://output.pdf"));
-        document.close();
+        //String base64 = Base64.getEncoder().encodeToString(byteArray);
+        OCRSpace.key = "yourkey";
+        //OCRResult result = OCRSpace.detect(base64);
+        //PDDocument document = new PDDocument();
+        //SearchablePDFCreator.addPage(byteArray,result,document,0);
+        //document.save(new File("F://output.pdf"));
+        //document.close();
+        SearchablePDFCreator.convert("F://WebTWAINImage.pdf","F://WebTWAINImage-searchable.pdf");
     }
 }

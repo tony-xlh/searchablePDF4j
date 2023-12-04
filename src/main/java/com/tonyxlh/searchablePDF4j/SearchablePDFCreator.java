@@ -1,16 +1,20 @@
 package com.tonyxlh.searchablePDF4j;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.*;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +30,34 @@ public class SearchablePDFCreator {
             OCRResult result = OCRSpace.detect(base64);
             addPage(imageBytes,result,document,index);
             index = index + 1;
+        }
+        // Save the new PDF document
+        document.save(new File(outputPath));
+        document.close();
+    }
+
+    public static void convert(String pdfPath,String outputPath) throws IOException {
+        // load PDF document
+        File file = new File(pdfPath);
+        PDDocument document = Loader.loadPDF(file);
+        for (int i = 0; i < document.getNumberOfPages(); i++) {
+            PDPage page = document.getPage(i);
+            for (COSName name:page.getResources().getXObjectNames()) {
+                PDXObject object = page.getResources().getXObject(name);
+                if (object instanceof PDImageXObject) {
+                    BufferedImage bi = ((PDImageXObject) object).getImage();
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(bi, "jpg", baos);
+                    byte[] byteArray = baos.toByteArray();
+                    PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.APPEND, false);
+                    String base64 = Base64.getEncoder().encodeToString(byteArray);
+                    OCRResult result = OCRSpace.detect(base64);
+                    double percent = page.getMediaBox().getHeight()/bi.getHeight();
+                    addTextOverlay(contentStream,result,bi.getHeight(), new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN), percent);
+                    contentStream.close();
+                    break;
+                }
+            }
         }
         // Save the new PDF document
         document.save(new File(outputPath));
@@ -55,15 +87,18 @@ public class SearchablePDFCreator {
         addTextOverlay(contentStream,result,pageHeight,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
     }
     public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont) throws IOException {
+        addTextOverlay(contentStream,result,pageHeight,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN),1.0);
+    }
+    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont,double percent) throws IOException {
         PDFont font = pdFont;
         contentStream.setFont(font, 16);
         contentStream.setRenderingMode(RenderingMode.NEITHER);
         for (int i = 0; i <result.lines.size() ; i++) {
             TextLine line = result.lines.get(i);
-            FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
+            FontInfo fi = calculateFontSize(font,line.text, (float) (line.width * percent), (float) (line.height * percent));
             contentStream.beginText();
             contentStream.setFont(font, fi.fontSize);
-            contentStream.newLineAtOffset((float) line.left, (float) (pageHeight - line.top - line.height));
+            contentStream.newLineAtOffset((float) (line.left * percent), (float) ((pageHeight - line.top - line.height) * percent));
             contentStream.showText(line.text);
             contentStream.endText();
         }
