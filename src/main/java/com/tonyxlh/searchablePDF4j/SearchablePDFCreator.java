@@ -22,32 +22,7 @@ public class SearchablePDFCreator {
         PDDocument document = new PDDocument();
         int index = 0;
         for (byte[] imageBytes:images) {
-            Image img = new Image(new ByteArrayInputStream(imageBytes));
-            // Create a new PDF page
-            PDRectangle rect = new PDRectangle((float) img.getWidth(),(float) img.getHeight());
-            PDPage page = new PDPage(rect);
-            document.addPage(page);
-            // Set the font and size for the text
-            PDPageContentStream contentStream = new PDPageContentStream(document, page);
-            PDImageXObject image
-                    = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(index));
-            contentStream.drawImage(image, 0, 0);
-            PDFont font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
-            contentStream.setFont(font, 16);
-            contentStream.setRenderingMode(RenderingMode.NEITHER);
-            String base64 = Base64.getEncoder().encodeToString(imageBytes);
-            OCRResult result = OCRSpace.detect(base64);
-            for (int i = 0; i <result.lines.size() ; i++) {
-                TextLine line = result.lines.get(i);
-                System.out.println(line.text);
-                FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
-                contentStream.beginText();
-                contentStream.setFont(font, fi.fontSize);
-                contentStream.newLineAtOffset((float) line.left, (float) (img.getHeight() - line.top - line.height));
-                contentStream.showText(line.text);
-                contentStream.endText();
-            }
-            contentStream.close();
+            addPage(imageBytes,document,index);
             index = index + 1;
         }
 
@@ -55,8 +30,35 @@ public class SearchablePDFCreator {
         document.save(new File(outputPath));
         document.close();
     }
-    private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
 
+    private static void addPage(byte[] imageBytes,PDDocument document,int index) throws IOException {
+        Image img = new Image(new ByteArrayInputStream(imageBytes));
+        // Create a new PDF page
+        PDRectangle rect = new PDRectangle((float) img.getWidth(),(float) img.getHeight());
+        PDPage page = new PDPage(rect);
+        document.addPage(page);
+        // Set the font and size for the text
+        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+        PDImageXObject image
+                = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(index));
+        contentStream.drawImage(image, 0, 0);
+        PDFont font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+        contentStream.setFont(font, 16);
+        contentStream.setRenderingMode(RenderingMode.NEITHER);
+        String base64 = Base64.getEncoder().encodeToString(imageBytes);
+        OCRResult result = OCRSpace.detect(base64);
+        for (int i = 0; i <result.lines.size() ; i++) {
+            TextLine line = result.lines.get(i);
+            FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
+            contentStream.beginText();
+            contentStream.setFont(font, fi.fontSize);
+            contentStream.newLineAtOffset((float) line.left, (float) (img.getHeight() - line.top - line.height));
+            contentStream.showText(line.text);
+            contentStream.endText();
+        }
+        contentStream.close();
+    }
+    private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
         int fontSize = 17;
         float textWidth = font.getStringWidth(text) / 1000 * fontSize;
         float textHeight = font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize;
@@ -75,8 +77,6 @@ public class SearchablePDFCreator {
                 textHeight = font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize;
             }
         }
-
-        //System.out.println("Text height before returning font size: " + textHeight);
 
         FontInfo fi = new FontInfo();
         fi.fontSize = fontSize;
