@@ -22,7 +22,9 @@ public class SearchablePDFCreator {
         PDDocument document = new PDDocument();
         int index = 0;
         for (byte[] imageBytes:images) {
-            addPage(imageBytes,document,index);
+            String base64 = Base64.getEncoder().encodeToString(imageBytes);
+            OCRResult result = OCRSpace.detect(base64);
+            addPage(imageBytes,result,document,index);
             index = index + 1;
         }
 
@@ -31,7 +33,7 @@ public class SearchablePDFCreator {
         document.close();
     }
 
-    private static void addPage(byte[] imageBytes,PDDocument document,int index) throws IOException {
+    private static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(imageBytes);
         BufferedImage bi = ImageIO.read(in);
         // Create a new PDF page
@@ -41,13 +43,12 @@ public class SearchablePDFCreator {
         // Set the font and size for the text
         PDPageContentStream contentStream = new PDPageContentStream(document, page);
         PDImageXObject image
-                = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(index));
+                = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(pageIndex));
         contentStream.drawImage(image, 0, 0);
         PDFont font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
         contentStream.setFont(font, 16);
         contentStream.setRenderingMode(RenderingMode.NEITHER);
-        String base64 = Base64.getEncoder().encodeToString(imageBytes);
-        OCRResult result = OCRSpace.detect(base64);
+
         for (int i = 0; i <result.lines.size() ; i++) {
             TextLine line = result.lines.get(i);
             FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
