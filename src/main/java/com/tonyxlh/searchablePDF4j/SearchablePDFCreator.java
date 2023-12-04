@@ -18,7 +18,7 @@ import java.util.Base64;
 
 public class SearchablePDFCreator {
     public static void create(ArrayList<byte[]> images,String outputPath) throws IOException {
-        // Load the PDF document
+        // new PDF document
         PDDocument document = new PDDocument();
         int index = 0;
         for (byte[] imageBytes:images) {
@@ -44,17 +44,17 @@ public class SearchablePDFCreator {
         PDImageXObject image
                 = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(pageIndex));
         contentStream.drawImage(image, 0, 0);
-        addTextOverlay(contentStream,result,pdFont);
+        addTextOverlay(contentStream,result,bi.getHeight(),pdFont);
         contentStream.close();
     }
 
     public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
         addPage(imageBytes,result,document,pageIndex,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
     }
-    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result) throws IOException {
-        addTextOverlay(contentStream,result,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
+    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight) throws IOException {
+        addTextOverlay(contentStream,result,pageHeight,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
     }
-    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, PDFont pdFont) throws IOException {
+    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont) throws IOException {
         PDFont font = pdFont;
         contentStream.setFont(font, 16);
         contentStream.setRenderingMode(RenderingMode.NEITHER);
@@ -63,7 +63,7 @@ public class SearchablePDFCreator {
             FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
             contentStream.beginText();
             contentStream.setFont(font, fi.fontSize);
-            contentStream.newLineAtOffset((float) line.left, (float) (bi.getHeight() - line.top - line.height));
+            contentStream.newLineAtOffset((float) line.left, (float) (pageHeight - line.top - line.height));
             contentStream.showText(line.text);
             contentStream.endText();
         }
