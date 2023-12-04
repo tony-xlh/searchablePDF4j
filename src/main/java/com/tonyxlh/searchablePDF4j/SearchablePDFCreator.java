@@ -5,8 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.font.*;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
 import org.w3c.dom.Text;
@@ -33,15 +32,18 @@ public class SearchablePDFCreator {
             PDImageXObject image
                     = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(index));
             contentStream.drawImage(image, 0, 0);
-            contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 16);
-            //contentStream.setRenderingMode(RenderingMode.NEITHER);
+            PDFont font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+            contentStream.setFont(font, 16);
+            contentStream.setRenderingMode(RenderingMode.NEITHER);
             String base64 = Base64.getEncoder().encodeToString(imageBytes);
             OCRResult result = OCRSpace.detect(base64);
             for (int i = 0; i <result.lines.size() ; i++) {
                 TextLine line = result.lines.get(i);
                 System.out.println(line.text);
+                FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
                 contentStream.beginText();
-                contentStream.newLineAtOffset((float) line.left, (float) (img.getHeight() - line.top));
+                contentStream.setFont(font, fi.fontSize);
+                contentStream.newLineAtOffset((float) line.left, (float) (img.getHeight() - line.top - line.height));
                 contentStream.showText(line.text);
                 contentStream.endText();
             }
@@ -53,4 +55,35 @@ public class SearchablePDFCreator {
         document.save(new File(outputPath));
         document.close();
     }
+    private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
+
+        int fontSize = 17;
+        float textWidth = font.getStringWidth(text) / 1000 * fontSize;
+        float textHeight = font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize;
+
+        if(textWidth > bbWidth){
+            while(textWidth > bbWidth){
+                fontSize -= 1;
+                textWidth = font.getStringWidth(text) / 1000 * fontSize;
+                textHeight = font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize;
+            }
+        }
+        else if(textWidth < bbWidth){
+            while(textWidth < bbWidth){
+                fontSize += 1;
+                textWidth = font.getStringWidth(text) / 1000 * fontSize;
+                textHeight = font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize;
+            }
+        }
+
+        //System.out.println("Text height before returning font size: " + textHeight);
+
+        FontInfo fi = new FontInfo();
+        fi.fontSize = fontSize;
+        fi.textHeight = textHeight;
+        fi.textWidth = textWidth;
+
+        return fi;
+    }
+
 }

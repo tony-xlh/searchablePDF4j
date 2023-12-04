@@ -1,11 +1,10 @@
 package com.tonyxlh.searchablePDF4j;
 
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
+
 
 public class Main {
     public static void main(String[] args) throws IOException {
