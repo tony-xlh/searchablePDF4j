@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 public class OCRSpace {
     public static String key = "";
+    public static String lang = "eng";
     public static OCRResult detect(String base64) throws IOException {
         OCRResult result = new OCRResult();
         File jsonFile = new File("ocr.json");
@@ -27,7 +28,7 @@ public class OCRSpace {
                     .build();
             RequestBody requestBody=new FormBody.Builder()
                     .add("apikey",key)
-                    .add("language","eng")
+                    .add("language",lang)
                     .add("base64Image","data:image/jpeg;base64,"+base64.trim())
                     .add("isOverlayRequired","true")
                     .build();
