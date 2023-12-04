@@ -27,11 +27,11 @@ public class SearchablePDFCreator {
             addPage(imageBytes,result,document,index);
             index = index + 1;
         }
-
         // Save the new PDF document
         document.save(new File(outputPath));
         document.close();
     }
+
     public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex,PDFont pdFont) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(imageBytes);
         BufferedImage bi = ImageIO.read(in);
@@ -44,10 +44,20 @@ public class SearchablePDFCreator {
         PDImageXObject image
                 = PDImageXObject.createFromByteArray(document,imageBytes,String.valueOf(pageIndex));
         contentStream.drawImage(image, 0, 0);
+        addTextOverlay(contentStream,result,pdFont);
+        contentStream.close();
+    }
+
+    public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
+        addPage(imageBytes,result,document,pageIndex,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
+    }
+    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result) throws IOException {
+        addTextOverlay(contentStream,result,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
+    }
+    public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, PDFont pdFont) throws IOException {
         PDFont font = pdFont;
         contentStream.setFont(font, 16);
         contentStream.setRenderingMode(RenderingMode.NEITHER);
-
         for (int i = 0; i <result.lines.size() ; i++) {
             TextLine line = result.lines.get(i);
             FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
@@ -57,11 +67,9 @@ public class SearchablePDFCreator {
             contentStream.showText(line.text);
             contentStream.endText();
         }
-        contentStream.close();
     }
-    public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
-      addPage(imageBytes,result,document,pageIndex,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
-    }
+
+
 
     private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
         int fontSize = 17;
