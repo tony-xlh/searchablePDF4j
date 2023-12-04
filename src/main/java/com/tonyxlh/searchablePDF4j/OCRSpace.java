@@ -5,24 +5,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class OCRSpace {
     public static String key = "";
-    private static final MediaType JSON
-            = MediaType.get("application/json; charset=utf-8");
     public static OCRResult detect(String base64) throws IOException {
         OCRResult result = new OCRResult();
-        File jsonFile = new File("F://ocr.json");
+        File jsonFile = new File("ocr.json");
         if (jsonFile.exists()) {
             String content = new String(Files.readAllBytes(Paths.get("F://ocr.json")));
             parse(content,result);
@@ -44,9 +39,9 @@ public class OCRSpace {
             try (Response response = client.newCall(httpRequest).execute()) {
                 try {
                     String json = response.body().string();
-                    String path = "F:\\ocr.json";
-                    Files.write( Paths.get(path), json.getBytes());
-                    System.out.println(json);
+                    //String path = "F:\\ocr.json";
+                    //Files.write( Paths.get(path), json.getBytes());
+                    //System.out.println(json);
                     parse(json,result);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
