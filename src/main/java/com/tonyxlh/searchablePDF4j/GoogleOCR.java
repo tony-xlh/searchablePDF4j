@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
+import org.w3c.dom.Text;
 
 import java.awt.*;
 import java.io.File;
@@ -79,33 +80,56 @@ public class GoogleOCR {
         for (Map<String,Object> block:blocks) {
             List<Map<String,Object>> paragraphs = (List<Map<String, Object>>) block.get("paragraphs");
             for (Map<String,Object> paragraph:paragraphs) {
-
-                List<Map<String,Object>> words = (List<Map<String, Object>>) paragraph.get("words");
-                for (Map<String,Object> word:words) {
-                    List<Map<String,Object>> symbols = (List<Map<String, Object>>) word.get("symbols");
-                    for (Map<String,Object> symbol:symbols) {
-                        System.out.println(symbol);
-                        Symbol ocrSymbol = new Symbol();
-                        ocrSymbol.text = (String) symbol.get("text");
-                        ocrSymbol.points = parseBoundingBox((Map<String, Object>) symbol.get("boundingBox"));
-                        ocrResult.symbols.add(ocrSymbol);
-                    }
-                }
+                TextLine line = parseAsTextLine(paragraph);
+                ocrResult.lines.add(line);
             }
         }
     }
 
-    private static ArrayList<Point> parseBoundingBox(Map<String,Object> boundingBox){
+    private static TextLine parseAsTextLine(Map<String,Object> item){
+        Map<String,Object> boundingBox = (Map<String, Object>) item.get("boundingBox");
         ArrayList<Point> points = new ArrayList<Point>();
+
         List<Map<String,Object>> vertices = (List<Map<String, Object>>) boundingBox.get("vertices");
+        int minX = (int) vertices.get(0).get("x");
+        int minY = (int) vertices.get(0).get("y");
+        int maxX = 0;
+        int maxY = 0;
         for (Map<String,Object> vertice:vertices) {
             int x = (int) vertice.get("x");
             int y = (int) vertice.get("y");
-            Point point = new Point();
-            point.x = x;
-            point.y = y;
-            points.add(point);
+            minX = Math.min(minX,x);
+            minY = Math.min(minY,y);
+            maxX = Math.max(maxX,x);
+            maxY = Math.max(maxY,y);
         }
-        return points;
+        String text = getTextOfParagraph(item);
+        return new TextLine(minX,minY,maxX - minX,maxY-minY,text);
+    }
+
+    private static String getTextOfParagraph(Map<String,Object> item){
+        StringBuilder sb = new StringBuilder();
+        List<Map<String,Object>> words = (List<Map<String, Object>>) item.get("words");
+        for (Map<String,Object> word:words) {
+            boolean hasSpace = true;
+            if (word.containsKey("property")) {
+                Map<String,Object> property = (Map<String, Object>) word.get("property");
+                List<Map<String,Object>> detectedLanguages = (List<Map<String, Object>>) property.get("detectedLanguages");
+                for (Map<String,Object> detectedLanguage:detectedLanguages) {
+                    String langcode = (String) detectedLanguage.get("languageCode");
+                    if (langcode.startsWith("zh") || langcode.startsWith("ja")) {
+                        hasSpace = false;
+                    }
+                }
+            }
+            List<Map<String,Object>> symbols = (List<Map<String, Object>>) word.get("symbols");
+            for (Map<String,Object> symbol:symbols) {
+              sb.append(symbol.get("text"));
+            }
+            if (hasSpace) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString().trim();
     }
 }

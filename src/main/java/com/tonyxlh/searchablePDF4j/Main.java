@@ -18,8 +18,8 @@ public class Main {
         String base64 = Base64.getEncoder().encodeToString(byteArray);
         OCRResult result = GoogleOCR.detect(base64);
         System.out.println(result);
-        System.out.println(result.symbols.size());
-        System.out.println(result.symbols.get(0).points.get(0).x);
-        System.out.println(result.symbols.get(0).points.get(0).y);
+        System.out.println(result.lines.size());
+        System.out.println(result.lines.get(3).text);
+        System.out.println(result.lines.get(3).left);
     }
 }
