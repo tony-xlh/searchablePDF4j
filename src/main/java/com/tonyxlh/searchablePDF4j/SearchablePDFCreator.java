@@ -1,6 +1,5 @@
 package com.tonyxlh.searchablePDF4j;
 
-import javafx.scene.image.Image;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -8,8 +7,9 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.*;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.state.RenderingMode;
-import org.w3c.dom.Text;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +32,10 @@ public class SearchablePDFCreator {
     }
 
     private static void addPage(byte[] imageBytes,PDDocument document,int index) throws IOException {
-        Image img = new Image(new ByteArrayInputStream(imageBytes));
+        ByteArrayInputStream in = new ByteArrayInputStream(imageBytes);
+        BufferedImage bi = ImageIO.read(in);
         // Create a new PDF page
-        PDRectangle rect = new PDRectangle((float) img.getWidth(),(float) img.getHeight());
+        PDRectangle rect = new PDRectangle((float) bi.getWidth(),(float) bi.getHeight());
         PDPage page = new PDPage(rect);
         document.addPage(page);
         // Set the font and size for the text
@@ -52,7 +53,7 @@ public class SearchablePDFCreator {
             FontInfo fi = calculateFontSize(font,line.text, (float) line.width, (float) line.height);
             contentStream.beginText();
             contentStream.setFont(font, fi.fontSize);
-            contentStream.newLineAtOffset((float) line.left, (float) (img.getHeight() - line.top - line.height));
+            contentStream.newLineAtOffset((float) line.left, (float) (bi.getHeight() - line.top - line.height));
             contentStream.showText(line.text);
             contentStream.endText();
         }
