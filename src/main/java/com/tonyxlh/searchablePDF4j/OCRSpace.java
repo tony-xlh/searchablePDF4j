@@ -16,6 +16,12 @@ import java.util.concurrent.TimeUnit;
 public class OCRSpace {
     public static String key = "";
     public static String lang = "eng";
+    /**
+     * Get OCR result from a base64-encoded image in JPEG format
+     *
+     * @param base64 - base64-encoded image
+     *
+     */
     public static OCRResult detect(String base64) throws IOException {
         OCRResult result = new OCRResult();
         File jsonFile = new File("ocr.json");

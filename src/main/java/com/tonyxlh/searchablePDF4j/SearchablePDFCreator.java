@@ -21,6 +21,13 @@ import java.util.ArrayList;
 import java.util.Base64;
 
 public class SearchablePDFCreator {
+    /**
+     * Create a new searchable PDF from images
+     *
+     * @param images - a list of images in byte array
+     * @param outputPath - output PDF path
+     *
+     */
     public static void create(ArrayList<byte[]> images,String outputPath) throws IOException {
         // new PDF document
         PDDocument document = new PDDocument();
@@ -35,7 +42,13 @@ public class SearchablePDFCreator {
         document.save(new File(outputPath));
         document.close();
     }
-
+    /**
+     * Convert an existing PDF to a new searchable PDF
+     *
+     * @param pdfPath - source PDF path
+     * @param outputPath - output PDF path
+     *
+     */
     public static void convert(String pdfPath,String outputPath) throws IOException {
         // load PDF document
         File file = new File(pdfPath);
@@ -64,6 +77,9 @@ public class SearchablePDFCreator {
         document.close();
     }
 
+    /**
+     * Add a page to an existing PDF document object
+     */
     public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex,PDFont pdFont) throws IOException {
         ByteArrayInputStream in = new ByteArrayInputStream(imageBytes);
         BufferedImage bi = ImageIO.read(in);
@@ -80,15 +96,40 @@ public class SearchablePDFCreator {
         contentStream.close();
     }
 
+    /**
+     * Add a page to an existing PDF document object
+     */
     public static void addPage(byte[] imageBytes,OCRResult result, PDDocument document,int pageIndex) throws IOException {
         addPage(imageBytes,result,document,pageIndex,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
     }
+
+    /**
+     * Add text overlay to an existing PDF page
+     * @param contentStream - PDF content stream
+     * @param result - OCR result
+     * @param pageHeight - Height of the image
+     */
     public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight) throws IOException {
         addTextOverlay(contentStream,result,pageHeight,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN));
     }
+    /**
+     * Add text overlay to an existing PDF page
+     * @param contentStream - PDF content stream
+     * @param result - OCR result
+     * @param pageHeight - Height of the image
+     * @param pdFont - Specify a font for evaluation of the position
+     */
     public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont) throws IOException {
         addTextOverlay(contentStream,result,pageHeight,new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN),1.0);
     }
+    /**
+     * Add text overlay to an existing PDF page
+     * @param contentStream - PDF content stream
+     * @param result - OCR result
+     * @param pageHeight - Height of the image
+     * @param pdFont - Specify a font for evaluation of the position
+     * @param percent - image's height / page's height
+     */
     public static void addTextOverlay(PDPageContentStream contentStream,OCRResult result, double pageHeight, PDFont pdFont,double percent) throws IOException {
         PDFont font = pdFont;
         contentStream.setFont(font, 16);
@@ -103,8 +144,6 @@ public class SearchablePDFCreator {
             contentStream.endText();
         }
     }
-
-
 
     private static FontInfo calculateFontSize(PDFont font, String text, float bbWidth, float bbHeight) throws IOException {
         int fontSize = 17;
