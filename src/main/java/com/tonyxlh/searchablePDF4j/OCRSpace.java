@@ -24,7 +24,7 @@ public class OCRSpace {
      */
     public static OCRResult detect(String base64) throws IOException {
         OCRResult result = new OCRResult();
-        File jsonFile = new File("ocr.json");
+        File jsonFile = new File("F://ocr.json");
         if (jsonFile.exists()) {
             String content = new String(Files.readAllBytes(Paths.get("F://ocr.json")));
             parse(content,result);
